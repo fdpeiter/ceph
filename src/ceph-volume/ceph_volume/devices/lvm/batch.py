@@ -161,6 +161,11 @@ class Batch(object):
                 args.filtered_devices[device] = {"reasons": ["Used by ceph as a data device already"]}
             if args.yes and unused_devices:
                 mlogger.info("Ignoring devices already used by ceph: %s" % ", ".join(used_devices))
+        if len(unused_devices) == 1:
+            last_device = unused_devices[0]
+            if not last_device.rotational and last_device.is_lvm_member:
+                reason = "Used by ceph as a %s already and there are no devices left for data/block" % last_device.lvs[0].tags.get("ceph.type")
+                args.filtered_devices[last_device.abspath] = {"reasons": [reason]}
         if not unused_devices and not args.format == 'json':
             # report nothing changed
             mlogger.info("All devices are already used by ceph. No OSDs will be created.")
